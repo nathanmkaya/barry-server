@@ -1,0 +1,100 @@
+// /proto/speedtest.proto
+syntax = "proto3";
+
+package speedtest;
+
+// Define common options for Go and potentially Java/Kotlin
+option go_package = "github.com/nathanmkaya/barry-go-server/proto/speedtest";
+// option java_package = "com.yourcompany.speedtest.proto";
+// option java_multiple_files = true;
+
+// ----------------------------------------
+// Service Definition
+// ----------------------------------------
+
+service SpeedTestService {
+  // Fetches a list of suitable test servers.
+  rpc GetServers (GetServersRequest) returns (GetServersResponse);
+
+  // Performs a simple ping to measure latency.
+  rpc Ping (PingRequest) returns (PingResponse);
+
+  // Initiates a download test - server streams data to the client.
+  rpc Download (DownloadRequest) returns (stream DataChunk);
+
+  // Initiates an upload test - client streams data to the server.
+  rpc Upload (stream DataChunk) returns (UploadResponse);
+
+  // Gets the client's public IP address as seen by the server.
+  rpc GetClientIP (GetClientIPRequest) returns (GetClientIPResponse);
+}
+
+// ----------------------------------------
+// Message Types
+// ----------------------------------------
+
+// Represents a test server.
+message ServerInfo {
+  string id = 1;
+  string url = 2;         // gRPC endpoint URL (e.g., "grpc.speedtest.example.com:443")
+  string region = 3;
+  string city = 4;
+  string country = 5;     // ISO 3166-1 alpha-2 code
+}
+
+// Request to get servers. Can include client hints.
+message GetServersRequest {
+  int32 limit = 1;        // Optional limit on number of servers returned
+  // Could add GeoLocation hint here later if needed
+}
+
+// Response containing a list of servers.
+message GetServersResponse {
+  repeated ServerInfo servers = 1;
+}
+
+// Request for a latency ping.
+message PingRequest {
+  string server_id = 1;   // ID of the server being pinged (for context)
+  int64 client_timestamp_unix_nano = 2; // Client timestamp before sending
+}
+
+// Response for a latency ping.
+message PingResponse {
+  int64 client_timestamp_unix_nano = 1; // Echoed back from request
+  int64 server_timestamp_unix_nano = 2; // Server timestamp upon receiving
+  // Client calculates RTT = (now_nano - client_timestamp_unix_nano)
+}
+
+// Request to start a download test.
+message DownloadRequest {
+  string server_id = 1;
+  // Optional: Could include hints like requested duration or size,
+  // but server streaming often relies on client closing the stream.
+  int32 chunk_size_hint_bytes = 2; // Client preferred chunk size
+}
+
+// Represents a chunk of data for download/upload streams.
+message DataChunk {
+  bytes data = 1;
+}
+
+// Final response after the client finishes uploading data.
+message UploadResponse {
+  int64 bytes_received = 1;
+  // Optional: Server could calculate and return upload Mbps here
+  // double upload_mbps = 2;
+}
+
+// Request to get the client's IP address.
+message GetClientIPRequest {
+  // Empty for now
+}
+
+// Response containing the client's IP address.
+message GetClientIPResponse {
+  string client_ip = 1;
+  // Optional: GeoIP info
+  string city = 2;
+  string country = 3;
+}

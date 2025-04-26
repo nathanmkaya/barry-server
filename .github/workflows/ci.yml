@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  test:
+    name: 🧪 Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache-dependency-path: "**/*go.sum"
+
+      - name: Install Protobuf Tools
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+      - name: Verify go.mod tidy
+        run: go mod tidy -v
+
+      - name: Check formatting (go fmt)
+        run: |
+          fmt_out=$(go fmt ./...)
+          if [ -n "$fmt_out" ]; then
+            echo "::error ::The following files need go fmt formatting: $fmt_out"
+            exit 1
+          fi
+
+      - name: Vet code
+        run: go vet ./...
+
+      - name: Staticcheck
+        uses: dominikh/staticcheck-action@v1
+        with:
+          version: "2025.1.1"
+          install-go: false
+
+      - name: Lint with golangci-lint
+        uses: golangci/golangci-lint-action@v7
+
+      - name: Run tests
+        run: go test ./... -timeout 30s -coverprofile coverage.out
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.out
+
+      - name: Build binary
+        run: go build -o speedtest-server ./cmd/server
+
+      - name: Govulncheck (optional security scan)
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...
