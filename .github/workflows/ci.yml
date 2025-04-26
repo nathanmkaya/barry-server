@@ -54,13 +54,6 @@ jobs:
       - name: Run tests
         run: go test ./... -timeout 30s -coverprofile coverage.out
 
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage-report
-          path: coverage.out
-
       - name: Build binary
         run: go build -o speedtest-server ./cmd/server
 
