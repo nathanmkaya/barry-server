@@ -2,7 +2,7 @@
 
 # Stage 1: Build the application binary
 # Use a specific Go version matching your development environment
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Set necessary environment variables
 ENV CGO_ENABLED=0 GOOS=linux
