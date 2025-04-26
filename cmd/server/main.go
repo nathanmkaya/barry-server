@@ -31,7 +31,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen on %s: %v", cfg.ListenAddress, err)
 	}
-	defer lis.Close()
+
+	defer func() {
+		if err := lis.Close(); err != nil {
+			log.Fatalf("error closing listener: %v", err)
+		}
+	}()
+
 	log.Printf("Server listening on %s", cfg.ListenAddress)
 
 	// Create gRPC server instance
