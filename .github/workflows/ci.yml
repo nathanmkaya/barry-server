@@ -47,6 +47,7 @@ jobs:
         with:
           version: "2025.1.1"
           install-go: false
+          cache-key: ${{ hashFiles('**/go.sum') }}
 
       - name: Lint with golangci-lint
         uses: golangci/golangci-lint-action@v7
