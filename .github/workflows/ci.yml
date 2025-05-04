@@ -50,7 +50,7 @@ jobs:
           cache-key: ${{ hashFiles('**/go.sum') }}
 
       - name: Lint with golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v8
 
       - name: Run tests
         run: go test ./... -timeout 30s -coverprofile coverage.out
